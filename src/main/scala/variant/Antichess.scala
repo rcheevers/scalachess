@@ -49,9 +49,14 @@ case object Antichess
       acc + color.fold(-2, 2)
     }
 
-  // In antichess, there is no checkmate condition therefore a player may only draw either by agreement,
-  // blockade or stalemate. A player always has sufficient material to win otherwise.
-  override def opponentHasInsufficientMaterial(situation: Situation) = false
+  // in NvN positions, only the player who changes the square color first can win
+  // detects these positions after timeout and makes it a draw if the the winning knight was the one to run out of time
+  override def opponentHasInsufficientMaterial(situation: Situation) : Boolean = {
+    val knightsOnly = Situation.board.pieces.values.forall(_.is(Knight))
+    val exactlyTwo = Situation.board.piecesOf(!Situation.color).count(_._2.is(Knight)) == 1 && Situation.board.piecesOf(Situation.color).count(_._2.is(Knight)) == 1
+    val sameColorSquares = Situation.board.piecesOf(!Situation.color).count(_._1.isLight) == Situation.board.piecesOf(Situation.color).count(_._1.isLight)
+    knightsOnly && exactlyTwo && sameColorSquares
+  }
 
   // No player can win if the only remaining pieces are opposing bishops on different coloured
   // diagonals. There may be pawns that are incapable of moving and do not attack the right color
